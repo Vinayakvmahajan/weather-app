@@ -1,0 +1,57 @@
+pipeline {
+    agent any
+
+    stages {
+        stage('Clone Repository') {
+            steps {
+                git url: 'https://github.com/Vinayakvmahajan/weather-app.git', branch: 'main' // Replace with your repo URL and branch
+            }
+        }
+
+        stage('Build Backend') {
+            steps {
+                dir('backend') { // Adjust this to your backend service directory
+                    sh 'mvn clean package'
+                }
+            }
+        }
+
+        stage('Build Frontend') {
+            steps {
+                dir('frontend') { // Adjust this to your frontend service directory
+                    sh 'npm install'
+                    sh 'npm run build --prod'
+                }
+            }
+        }
+
+        stage('Dockerize Backend') {
+            steps {
+                dir('backend') {
+                    script {
+                        docker.build('weather-backend-image') // Replace with your desired image name
+                    }
+                }
+            }
+        }
+
+        stage('Dockerize Frontend') {
+            steps {
+                dir('frontend') {
+                    script {
+                        docker.build('weather-frontend-image') // Replace with your desired image name
+                    }
+                }
+            }
+        }
+    }
+
+    post {
+        success {
+            echo 'Build completed successfully.'
+        }
+        failure {
+            echo 'Build failed.'
+        }
+    }
+}
